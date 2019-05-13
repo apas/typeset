@@ -29,9 +29,9 @@ will complain about missing dependencies—just install them with `tlmgr`.
 
 ## iOS Shortcut
 
-`URL` with the domain and `/md` endpoint to `Get Contents of URL` which makes a
+`URL` with the domain and `/md/` endpoint to `Get Contents of URL` which makes a
 POST request with request body `Form` and key `file`, value `Shorcut Input`
-Magic Variable. `URL` with the domain and `/pdf` endpoint to `Get Contents of
+Magic Variable. `URL` with the domain and `/pdf/` endpoint to `Get Contents of
 URL` which makes a GET to `Quick Look`.
 
 ## License
