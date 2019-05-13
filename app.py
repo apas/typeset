@@ -14,7 +14,7 @@ os.environ.setdefault('PYPANDOC_PANDOC', '/home/linuxbrew/.linuxbrew/bin/pandoc'
 
 def allowed_file(filename):
     return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        filename.rsplit('.', -1)[-1].lower() in ALLOWED_EXTENSIONS
 
 def prep():
     for file in os.listdir(uploads):
@@ -28,7 +28,7 @@ def prep():
         except Excception as e:
             print(e)
 
-def pandoc(file):
+def pandoc(md_file):
     filters = ["/home/linuxbrew/.linuxbrew/bin/pandoc-crossref",
                 "/home/linuxbrew/.linuxbrew/bin/pandoc-citeproc"]
     pdoc_args = ["--template=default.latex",
@@ -40,12 +40,11 @@ def pandoc(file):
                 "--highlight-style", "pygments",
                 "-V", "urlcolor=blue"]
 
-    file_out = "uploads/" + file.split("/", 1)[-1]
-    file_out = file_out.split(".", 1)[0] + ".pdf"
+    pdf = md_file.split(".", -1)[0] + ".pdf"
 
-    output = pypandoc.convert_file(file, format="md", to="latex",
+    output = pypandoc.convert_file(md_file, format="md", to="latex",
                                     extra_args=pdoc_args, filters=filters,
-                                    outputfile=file_out)
+                                    outputfile=pdf)
 
 def find_files(directory, extension):
     return glob(os.path.join(directory, "*.{}".format(extension)))
@@ -58,7 +57,7 @@ def index():
 def url(path):
     return "And all watched over by machines of loving grace."
 
-@app.route("/md", methods=["POST"])
+@app.route("/md/", methods=["POST"])
 def md():
     if request.method == "POST":
         if "file" not in request.files:
@@ -68,18 +67,22 @@ def md():
 
         if file and allowed_file(file.filename):
             prep()
-            filename = secure_filename(file.filename) + ".md"
-            file_path = os.path.join(uploads, filename)
-            file.save(file_path)
-            pandoc(file_path)
+
+            md_file = secure_filename(file.filename)
+            if md_file.split(".", -1)[-1] == "txt":
+                md_file += ".md"
+
+            md_file = os.path.join(uploads, md_file)
+            file.save(md_file)
+            pandoc(md_file)
             return "success"
 
-        return "pandoc"
+        return "failure"
 
-@app.route("/pdf")
+@app.route("/pdf/")
 def pdf():
-    files = find_files(uploads, "pdf")
-    file = files[0].split("/", 1)[-1]
+    pdf = find_files(uploads, "pdf")
+    pdf = pdf[0].split("/", 1)[-1]
 
     @after_this_request
     def clean(response):
@@ -89,7 +92,7 @@ def pdf():
             print(e)
         return response
 
-    return send_from_directory(uploads, file, as_attachment=True)
+    return send_from_directory(uploads, pdf, as_attachment=True)
 
 @app.route("/robots.txt")
 def robots():
